@@ -2,6 +2,7 @@ const router = require('express').Router();
 const Projects = require('./projects-model');
 const { 
     logger, 
+    getProjectById
 } = require('./projects-middleware');
 
 router.get('/', (req, res, next) => {
@@ -11,6 +12,10 @@ router.get('/', (req, res, next) => {
       res.status(200).json(projects);
     })
     .catch(next)
+});
+
+router.get('/:id', getProjectById, (req, res) => {
+    res.json(req.project)
 });
 
 router.use((err, req, res, next) => {
