@@ -1,12 +1,13 @@
 const router = require('express').Router();
-const Projects = require('./projects-model');
+const Project = require('./projects-model');
 const { 
     logger, 
-    getProjectById
+    validateProjectById,
+    validateProject,
 } = require('./projects-middleware');
 
 router.get('/', (req, res, next) => {
-  Projects.get()
+  Project.get()
     .then(projects => {
       console.log(projects);
       res.status(200).json(projects);
@@ -14,8 +15,50 @@ router.get('/', (req, res, next) => {
     .catch(next)
 });
 
-router.get('/:id', getProjectById, (req, res) => {
+router.get('/:id', validateProjectById, (req, res) => {
     res.json(req.project)
+});
+
+router.post('/', validateProject, (req, res, next) => {
+    Project.insert(req.body)
+        .then(projects => {
+            res.status(201).json({
+                ...projects,
+                id: Number(req.params.id)
+            });
+        })
+        .catch(next)
+});
+
+router.put('/:id', validateProjectById, validateProject, (req, res, next) => {
+    if(req.body.completed || req.body.completed === false) {
+        Project.update(req.params.id, req.body)
+            .then(projects => {
+                res.status(200).json(projects)
+            })
+            .catch(next);
+        } else {
+            next({
+                status: 400,
+                message: 'Project requires name and description'
+            })
+        }
+});
+
+router.delete('/:id', validateProjectById, (req, res, next) => {
+    Project.remove(req.params.id)
+        .then(() => {
+            res.json(req.project)
+        })
+        .catch(next);
+});
+
+router.get('/:id/actions', validateProjectById, (req, res, next) => {
+    Project.getProjectActions(req.params.id)
+        .then(actions => {
+            res.json(actions);
+        })
+        .catch(next);
 });
 
 router.use((err, req, res, next) => {
